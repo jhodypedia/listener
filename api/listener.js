@@ -1,45 +1,33 @@
-// /api/qris/listener.js
-// MPkRQNJQyNMDsXo0
-import { createClient } from '@supabase/supabase-js';
+// Simpan data sementara (non-persistent, hilang setelah restart)
+let logs = [];
 
-// === GANTI DENGAN DATA PUNYAMU ===
-const SUPABASE_URL = "https://dvrnfhhgobxmwxhbbtry.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR2cm5maGhnb2J4bXd4aGJidHJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NjczNDUsImV4cCI6MjA2ODQ0MzM0NX0.Gxqo2cV2hoaSnU4ET_nG6nFXai0pQOjdIYgAbS7584E";
-const API_KEY = "4rc0d3"; // HARUS cocok dengan di Android
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const API_KEY = '4rc0d3'; // Ganti sesuai kebutuhan
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  // Validasi API Key
-  const authHeader = req.headers['x-api-key'];
-  if (authHeader !== API_KEY) {
-    return res.status(401).json({ error: 'Unauthorized - Invalid API Key' });
+  const clientKey = req.headers['x-api-key'];
+  if (clientKey !== API_KEY) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const { title, message, amount, timestamp } = req.body;
+  try {
+    const { title, message, timestamp, amount } = req.body;
 
-  // Validasi data wajib
-  if (!message || !amount) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
-
-  // Simpan ke Supabase
-  const { error } = await supabase.from('transactions').insert([
-    {
-      title: title || '',
-      message,
-      amount: parseInt(amount),
-      timestamp: timestamp || new Date().toISOString()
+    if (!message || !amount) {
+      return res.status(400).json({ error: 'Missing required fields' });
     }
-  ]);
 
-  if (error) {
-    return res.status(500).json({ error: error.message });
+    // Simpan ke memori (log sementara)
+    logs.push({ title, message, timestamp, amount });
+
+    console.log('✅ New Transaction:', { title, message, amount });
+
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error('❌ Error:', err.message);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
-
-  return res.status(200).json({ success: true });
 }
