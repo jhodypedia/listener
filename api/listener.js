@@ -1,36 +1,41 @@
+// File: api/qris/listener.js
+
 export default async function handler(req, res) {
-  const API_KEY = "cek123"; // Ganti dengan kunci API rahasia kamu
-
-  // Hanya izinkan metode POST
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: "Method Not Allowed" });
+    return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  // Verifikasi API key dari header
-  const receivedApiKey = req.headers['x-api-key'];
-  if (receivedApiKey !== API_KEY) {
-    return res.status(403).json({ message: "Unauthorized: Invalid API Key" });
+  // Ambil API key dari header
+  const apiKey = req.headers['x-api-key'];
+  const serverApiKey = process.env.API_KEY;
+
+  if (!apiKey || apiKey !== serverApiKey) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  // Ambil data dari body
-  const { title, message, timestamp, amount } = req.body;
+  try {
+    const { title, message, timestamp, amount } = req.body;
 
-  if (!title || !message || !timestamp || !amount) {
-    return res.status(400).json({ message: "Bad Request: Data tidak lengkap" });
+    if (!title || !message || !timestamp || !amount) {
+      return res.status(400).json({ error: 'Missing data' });
+    }
+
+    const log = {
+      title,
+      message,
+      timestamp,
+      amount,
+      receivedAt: new Date().toISOString(),
+    };
+
+    console.log('✅ Data diterima:', log);
+
+    // Contoh menyimpan ke memori sementara (Vercel stateless, jadi hanya bisa log ke console)
+    // Kalau butuh simpan ke DB atau file permanen, gunakan Firestore, Supabase, atau MongoDB Atlas
+
+    return res.status(200).json({ success: true, log });
+  } catch (err) {
+    console.error('❌ Error saat proses data:', err);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
-
-  // Tampilkan di log Vercel
-  console.log("== Transaksi Masuk GoPay Merchant ==");
-  console.log("Judul    :", title);
-  console.log("Pesan    :", message);
-  console.log("Waktu    :", timestamp);
-  console.log("Nominal  : Rp" + amount);
-  console.log("====================================");
-
-  // Kirim respon ke aplikasi
-  return res.status(200).json({
-    success: true,
-    message: "Notifikasi transaksi diterima",
-    received: { title, message, timestamp, amount }
-  });
 }
