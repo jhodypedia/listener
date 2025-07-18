@@ -3,9 +3,9 @@
 import { createClient } from '@supabase/supabase-js';
 
 // === GANTI DENGAN DATA PUNYAMU ===
-const SUPABASE_URL = "https://YOUR_PROJECT.supabase.co";
-const SUPABASE_KEY = "YOUR_SUPABASE_SERVICE_ROLE_KEY";
-const API_KEY = "your_custom_apikey_123"; // HARUS cocok dengan di Android
+const SUPABASE_URL = "https://dvrnfhhgobxmwxhbbtry.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR2cm5maGhnb2J4bXd4aGJidHJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NjczNDUsImV4cCI6MjA2ODQ0MzM0NX0.Gxqo2cV2hoaSnU4ET_nG6nFXai0pQOjdIYgAbS7584E";
+const API_KEY = "4rc0d3"; // HARUS cocok dengan di Android
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
