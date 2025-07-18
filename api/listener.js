@@ -1,33 +1,31 @@
-// Simpan data sementara (non-persistent, hilang setelah restart)
-let logs = [];
+// Simpan data dalam memori (tidak persist)
+let transactionList = [];
 
-const API_KEY = '4rc0d3'; // Ganti sesuai kebutuhan
+export default function handler(req, res) {
+  const apiKey = req.headers['x-api-key'];
+  const validApiKey = '4rc0d3';
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
-
-  const clientKey = req.headers['x-api-key'];
-  if (clientKey !== API_KEY) {
+  if (apiKey !== validApiKey) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  try {
+  if (req.method === 'POST') {
     const { title, message, timestamp, amount } = req.body;
 
-    if (!message || !amount) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    if (!title || !message || !timestamp || !amount) {
+      return res.status(400).json({ error: 'Missing fields' });
     }
 
-    // Simpan ke memori (log sementara)
-    logs.push({ title, message, timestamp, amount });
-
-    console.log('✅ New Transaction:', { title, message, amount });
+    // Simpan ke array
+    const data = { title, message, timestamp, amount };
+    transactionList.unshift(data); // data terbaru di atas
 
     return res.status(200).json({ success: true });
-  } catch (err) {
-    console.error('❌ Error:', err.message);
-    return res.status(500).json({ error: 'Internal Server Error' });
   }
+
+  if (req.method === 'GET') {
+    return res.status(200).json(transactionList);
+  }
+
+  return res.status(405).json({ error: 'Method not allowed' });
 }
