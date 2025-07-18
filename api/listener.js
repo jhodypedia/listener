@@ -1,41 +1,45 @@
-// File: api/qris/listener.js
+// /api/qris/listener.js
+
+import { createClient } from '@supabase/supabase-js';
+
+// === GANTI DENGAN DATA PUNYAMU ===
+const SUPABASE_URL = "https://YOUR_PROJECT.supabase.co";
+const SUPABASE_KEY = "YOUR_SUPABASE_SERVICE_ROLE_KEY";
+const API_KEY = "your_custom_apikey_123"; // HARUS cocok dengan di Android
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  // Ambil API key dari header
-  const apiKey = req.headers['x-api-key'];
-  const serverApiKey = process.env.API_KEY;
-
-  if (!apiKey || apiKey !== serverApiKey) {
-    return res.status(401).json({ error: 'Unauthorized' });
+  // Validasi API Key
+  const authHeader = req.headers['x-api-key'];
+  if (authHeader !== API_KEY) {
+    return res.status(401).json({ error: 'Unauthorized - Invalid API Key' });
   }
 
-  try {
-    const { title, message, timestamp, amount } = req.body;
+  const { title, message, amount, timestamp } = req.body;
 
-    if (!title || !message || !timestamp || !amount) {
-      return res.status(400).json({ error: 'Missing data' });
-    }
+  // Validasi data wajib
+  if (!message || !amount) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
 
-    const log = {
-      title,
+  // Simpan ke Supabase
+  const { error } = await supabase.from('transactions').insert([
+    {
+      title: title || '',
       message,
-      timestamp,
-      amount,
-      receivedAt: new Date().toISOString(),
-    };
+      amount: parseInt(amount),
+      timestamp: timestamp || new Date().toISOString()
+    }
+  ]);
 
-    console.log('✅ Data diterima:', log);
-
-    // Contoh menyimpan ke memori sementara (Vercel stateless, jadi hanya bisa log ke console)
-    // Kalau butuh simpan ke DB atau file permanen, gunakan Firestore, Supabase, atau MongoDB Atlas
-
-    return res.status(200).json({ success: true, log });
-  } catch (err) {
-    console.error('❌ Error saat proses data:', err);
-    return res.status(500).json({ error: 'Internal Server Error' });
+  if (error) {
+    return res.status(500).json({ error: error.message });
   }
+
+  return res.status(200).json({ success: true });
 }
